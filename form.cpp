@@ -19,10 +19,10 @@ form::form(QWidget *parent, int numPlayers)
     ui->setupUi(this);
 
     // Set the fixed size of the window
-    this->setFixedSize(1000, 1000);
+    this->setFixedSize(940, 800);
 
     // Load the board image
-    QPixmap boardImage("/Users/georgesalman/Downloads/download.jpg"); // Your board image path
+    QPixmap boardImage("C:/Users/saleh/Downloads/board.jpeg"); // Your board image path
     if (boardImage.isNull()) {
         qDebug() << "Failed to load image!";
         return;
@@ -101,99 +101,103 @@ void form::updateCurrentPlayerToken(Player* player) {
 
     // Update the current player's token position on the board
     playerTokens[currentPlayerIndex]->setPos(newPosition);
+
+    if(gameManager->ISdoubleRolled==false)
+        gameManager->currentPlayerIndex = ( gameManager->currentPlayerIndex + 1) %  gameManager->getPlayers().size();
+
 }
 
 // Method to roll dice and move the current player
 void form::rollDice() {
-        if (gameManager->waiting_response) {
-            // Roll the dice for rent calculation when waiting for response
-            int die1 = (rand() % 6) + 1;
-            int die2 = (rand() % 6) + 1;
-            int totalDice = die1 + die2;
+    if (gameManager->waiting_response) {
+        // Roll the dice for rent calculation when waiting for response
+        int die1 = (rand() % 6) + 1;
+        int die2 = (rand() % 6) + 1;
+        int totalDice = die1 + die2;
 
-            Player* currentPlayer = gameManager->getCurrentPlayer();
-            Player* owner = gameManager->currentPropertyOwner;
+        Player* currentPlayer = gameManager->getCurrentPlayer();
+        Player* owner = gameManager->currentPropertyOwner;
 
-            if (gameManager->waiting_response_type == WaitingResponseType::UtilityRent) {
-                int rentAmount = totalDice * gameManager->rentMultiplier;
+        if (gameManager->waiting_response_type == WaitingResponseType::UtilityRent) {
+            int rentAmount = totalDice * gameManager->rentMultiplier;
 
-                if (currentPlayer->getBankBalance() >= rentAmount) {
-                    currentPlayer->updateBankBalance(-rentAmount);
-                    owner->updateBankBalance(rentAmount);
+            if (currentPlayer->getBankBalance() >= rentAmount) {
+                currentPlayer->updateBankBalance(-rentAmount);
+                owner->updateBankBalance(rentAmount);
 
-                    QMessageBox::information(this, "Rent Paid", "You rolled a " + QString::number(totalDice) +
-                                                                    " and paid $" + QString::number(rentAmount) + " rent to " +
-                                                                    QString::fromStdString(owner->getName()) + ".");
-                } else {
-                    QMessageBox::warning(this, "Cannot Afford Rent", "You don't have enough money to pay the rent.");
-                }
-            } else if (gameManager->waiting_response_type == WaitingResponseType::RailroadRent) {
-                int rentAmount = gameManager->rentMultiplier * totalDice;
-
-                if (currentPlayer->getBankBalance() >= rentAmount) {
-                    currentPlayer->updateBankBalance(-rentAmount);
-                    owner->updateBankBalance(rentAmount);
-
-                    QMessageBox::information(this, "Rent Paid", "You rolled a " + QString::number(totalDice) +
-                                                                    " and paid $" + QString::number(rentAmount) + " rent to " +
-                                                                    QString::fromStdString(owner->getName()) + ".");
-                }
+                QMessageBox::information(this, "Rent Paid", "You rolled a " + QString::number(totalDice) +
+                                                                " and paid $" + QString::number(rentAmount) + " rent to " +
+                                                                QString::fromStdString(owner->getName()) + ".");
+            } else {
+                QMessageBox::warning(this, "Cannot Afford Rent", "You don't have enough money to pay the rent.");
             }
-            gameManager->waiting_response = false;
-            updateCurrentPlayerToken(currentPlayer);
-        }
-        else {
-            if (gameManager->checkWinner() == true) {
-                // Get the winner
-                Player* winner = gameManager->getWinner();
+        } else if (gameManager->waiting_response_type == WaitingResponseType::RailroadRent) {
+            int rentAmount = gameManager->rentMultiplier * totalDice;
 
-                // Display a message box to announce the winner
-                QMessageBox::information(this, "Game Over", "Congratulations! The winner is " +
-                                                                QString::fromStdString(winner->getName()) +
-                                                                " with a balance of $" + QString::number(winner->getBankBalance()) + ".");
+            if (currentPlayer->getBankBalance() >= rentAmount) {
+                currentPlayer->updateBankBalance(-rentAmount);
+                owner->updateBankBalance(rentAmount);
 
-                // Close the form after the message is shown
-                this->close();
+                QMessageBox::information(this, "Rent Paid", "You rolled a " + QString::number(totalDice) +
+                                                                " and paid $" + QString::number(rentAmount) + " rent to " +
+                                                                QString::fromStdString(owner->getName()) + ".");
             }
-
-
-            int die1 = 2;
-            int die2 = 0;
-            Player* currentPlayer = gameManager->getCurrentPlayer();
-            bool wantsToPayForJail = false;
-            bool wantsToUseJailOutCard = false;
-
-            // Reset the decision flags before any player actions are taken
-            bool wantsToBuy = false;
-            bool wantsToPayForHouse = false;
-
-            int new_grid_index = die1 + die2;  // Calculate the new grid index
-
-            // Get the current grid and check its type
-            Grid* currentGrid = gameManager->getGridByIndex(new_grid_index);
-            GameHandler* gameHandler = gameManager->gameHandler;  // Access GameHandler from GameManager
-
-            // Reset decisions at the beginning of each turn
-            wantsToBuy = false;
-            wantsToPayForHouse = false;
-
-
-            // Call the movePlayer function with the user's decision
-            PlayerAction result = gameManager->movePlayer(die1, die2, wantsToBuy, wantsToPayForHouse, wantsToPayForJail, wantsToUseJailOutCard);
-
-            // Update the current player's token position on the GUI after the move
-            updateCurrentPlayerToken(currentPlayer);
-
-            // Handle actions based on the result from GameManager
-            handlePlayerAction(result);
-
-
-            // Update the UI with the dice roll result
-            ui->diceResultLabel->setText("You rolled a " + QString::number(die1) + " and " + QString::number(die2));
-            updatePlayerInfo();
-
-
         }
+        gameManager->waiting_response = false;
+        updateCurrentPlayerToken(currentPlayer);
+    }
+    else {
+        if (gameManager->checkWinner() == true) {
+            // Get the winner
+            Player* winner = gameManager->getWinner();
+
+            // Display a message box to announce the winner
+            QMessageBox::information(this, "Game Over", "Congratulations! The winner is " +
+                                                            QString::fromStdString(winner->getName()) +
+                                                            " with a balance of $" + QString::number(winner->getBankBalance()) + ".");
+
+            // Close the form after the message is shown
+            this->close();
+        }
+
+
+        int die1 = (rand() % 6) + 1;
+        int die2 = (rand() % 6) + 1;
+        Player* currentPlayer = gameManager->getCurrentPlayer();
+        bool wantsToPayForJail = false;
+        bool wantsToUseJailOutCard = false;
+
+        // Reset the decision flags before any player actions are taken
+        bool wantsToBuy = false;
+        bool wantsToPayForHouse = false;
+
+        int new_grid_index = die1 + die2;  // Calculate the new grid index
+
+        // Get the current grid and check its type
+        Grid* currentGrid = gameManager->getGridByIndex(new_grid_index);
+        GameHandler* gameHandler = gameManager->gameHandler;  // Access GameHandler from GameManager
+
+        // Reset decisions at the beginning of each turn
+        wantsToBuy = false;
+        wantsToPayForHouse = false;
+
+
+        // Call the movePlayer function with the user's decision
+        PlayerAction result = gameManager->movePlayer(die1, die2, wantsToBuy, wantsToPayForHouse, wantsToPayForJail, wantsToUseJailOutCard);
+
+        // Update the current player's token position on the GUI after the move
+        updateCurrentPlayerToken(currentPlayer);
+
+        // Handle actions based on the result from GameManager
+        handlePlayerAction(result);
+
+
+        // Update the UI with the dice roll result
+        ui->diceResultLabel->setText("You rolled a " + QString::number(die1) + " and " + QString::number(die2));
+        updatePlayerInfo();
+
+
+    }
 
 
 }
