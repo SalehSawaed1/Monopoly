@@ -1,3 +1,0 @@
-C:/Users/saleh/Downloads/fUNCTIONING/untitled/cmake-build-debug/CMakeFiles/MonopolyGameTest.dir
-C:/Users/saleh/Downloads/fUNCTIONING/untitled/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/saleh/Downloads/fUNCTIONING/untitled/cmake-build-debug/CMakeFiles/rebuild_cache.dir
