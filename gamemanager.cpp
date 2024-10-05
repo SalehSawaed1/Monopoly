@@ -53,13 +53,14 @@ PlayerAction GameManager::movePlayer(int die1, int die2, bool wantsToBuy, bool w
                                      bool wantsToPayForJail, bool wantsToUseJailOutCard) {
     Player* currentPlayer = getCurrentPlayer();
     int diceRollResult = rollDice(die1, die2);
+    std::cout<<currentPlayer->getName();
 
     // Check if the player rolled three doubles and went to jail
     if (diceRollResult == -1) {
         std::cout << currentPlayer->getName() << " rolled three doubles and is going to jail!\n";
         currentPlayer->setInJail(true);
         currentPlayer->setCurrentGridIndex(10);
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        this->ISdoubleRolled = false;
         return PlayerAction::GoToJail;
     }
     //PLAYER IS IN JAIL, AND ROLLED DOUBLE
@@ -67,7 +68,7 @@ PlayerAction GameManager::movePlayer(int die1, int die2, bool wantsToBuy, bool w
     if (diceRollResult == -2) {
         std::cout << currentPlayer->getName() << " rolled three doubles and is going to jail!\n";
         currentPlayer->setInJail(false);
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        this->ISdoubleRolled = true;
         return PlayerAction::OutOfJail;
     }
 
@@ -76,7 +77,8 @@ PlayerAction GameManager::movePlayer(int die1, int die2, bool wantsToBuy, bool w
     // If the player is in jail, handle the jail logic first
     if (currentPlayer->isInJail()) {
         currentPlayer->incrementJailTurn();
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        std::cout<<currentPlayer->getName();
+        this->ISdoubleRolled = false;
         return  gameHandler->handleGoToJail(currentPlayer, wantsToPayForJail, wantsToUseJailOutCard);
     }
     //PLAYER IS IN JAIL, AND NO DOUBLES WERE ROLLED
@@ -99,7 +101,6 @@ PlayerAction GameManager::movePlayer(int die1, int die2, bool wantsToBuy, bool w
         std::cout << currentPlayer->getName() << " landed on 'Go to Jail' and is going to jail!\n";
         currentPlayer->setInJail(true);
         currentPlayer->setCurrentGridIndex(10);
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
 
         return PlayerAction::GoToJail;
     }
@@ -109,13 +110,15 @@ PlayerAction GameManager::movePlayer(int die1, int die2, bool wantsToBuy, bool w
     Grid* grid = getGridByIndex(newGridIndex);
     if (!grid) {
         std::cerr << "Error: grid is null!" << std::endl;
-        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
         return PlayerAction::NoAction;
     }
+    if(die1==die2)
+        this->ISdoubleRolled = true;
+    else
+    {this->ISdoubleRolled = false;}
 
-    // Process the landing on the new grid using the GameHandler
-    currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     return gameHandler->handleLanding(currentPlayer, grid, wantsToBuy, wantsToPayForHouse,diceRollResult);
+
 
 }
 
