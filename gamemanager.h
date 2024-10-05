@@ -21,7 +21,7 @@ public:
     int getCurrentPlayerIndex() const {
         return currentPlayerIndex;
     }
-
+    bool ISdoubleRolled = false;
     int rollDice(int die1, int die2);
     PlayerAction movePlayer(int die1, int die2, bool wantsToBuy, bool wantsToPayForHouse,
                             bool wantsToPayForJail, bool wantsToUseJailOutCard);
