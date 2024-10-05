@@ -313,7 +313,15 @@ PlayerAction GameHandler::handleSurprise(Player* player, SurpriseGrid* surprise)
         cout<<newGridIndex<<endl;
         if (newGridIndex < 0) newGridIndex += m_gameManager->getBoard().size();  // Wrap around if negative
         player->setCurrentGridIndex(newGridIndex);
+        Grid* newGrid = m_gameManager->getGridByIndex(newGridIndex);
+        if(newGridIndex==30){
+            player->setCurrentGridIndex(10);
+            player->setInJail(true);
+
+        }
         QMessageBox::information(nullptr, "Go Back", "You moved back 3 spaces.");
+        return handleLanding(m_gameManager->getCurrentPlayer(), newGrid, false, false, 0);
+
         return PlayerAction::SurpriseCardGoBack3Spaces;
 
     } else if (surpriseResult == "Go directly to Jail – do not pass Go, do not collect $200") {
@@ -397,47 +405,47 @@ PlayerAction GameHandler::handleSurprise(Player* player, SurpriseGrid* surprise)
         return PlayerAction::SurpriseCardStreetRepairs;
 
     } else if (surpriseResult == "Advance to nearest Utility – If unowned you may buy it from the Bank. If owned, throw dice and pay owner a total ten times the amount thrown.") {
-            int utilityIndex = findNearestUtility(player->getCurrentGridIndex());
-            player->setCurrentGridIndex(utilityIndex);
+        int utilityIndex = findNearestUtility(player->getCurrentGridIndex());
+        player->setCurrentGridIndex(utilityIndex);
 
-            UtilityGrid* utility = dynamic_cast<UtilityGrid*>(m_gameManager->getGridByIndex(utilityIndex));
-            Player* owner = findOwner_Utility(utility, m_gameManager->getPlayers());
+        UtilityGrid* utility = dynamic_cast<UtilityGrid*>(m_gameManager->getGridByIndex(utilityIndex));
+        Player* owner = findOwner_Utility(utility, m_gameManager->getPlayers());
 
-            if (owner == nullptr) {
-                // No owner, player may buy
-                QMessageBox::information(nullptr, "Nearest Utility", "You advanced to the nearest utility and may buy it from the bank.");
+        if (owner == nullptr) {
+            // No owner, player may buy
+            QMessageBox::information(nullptr, "Nearest Utility", "You advanced to the nearest utility and may buy it from the bank.");
 
 
-                QMessageBox::StandardButton reply;
-                reply = QMessageBox::question(nullptr, "Buy Utility",
-                                              "Do you want to buy " + QString::fromStdString(utility->getName()) +
-                                                  " for $150?",
-                                              QMessageBox::Yes | QMessageBox::No);
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(nullptr, "Buy Utility",
+                                          "Do you want to buy " + QString::fromStdString(utility->getName()) +
+                                              " for $150?",
+                                          QMessageBox::Yes | QMessageBox::No);
 
-                if (reply == QMessageBox::Yes) {
-                    if (player->getBankBalance() >= 150) {
-                        player->updateBankBalance(-150);
-                        player->addUtility(utility);
-                        QMessageBox::information(nullptr, "Purchase Successful", "You successfully bought the utility.");
-                        return PlayerAction::BuyProperty;
-                    } else {
-                        QMessageBox::warning(nullptr, "Cannot Afford", "You cannot afford this utility.");
-                        return PlayerAction::CannotAffordProperty;
-                    }
+            if (reply == QMessageBox::Yes) {
+                if (player->getBankBalance() >= 150) {
+                    player->updateBankBalance(-150);
+                    player->addUtility(utility);
+                    QMessageBox::information(nullptr, "Purchase Successful", "You successfully bought the utility.");
+                    return PlayerAction::BuyProperty;
+                } else {
+                    QMessageBox::warning(nullptr, "Cannot Afford", "You cannot afford this utility.");
+                    return PlayerAction::CannotAffordProperty;
                 }
-                return PlayerAction::SurpriseCardNearestUtility;
-            } else if (owner != player) {
-                // Utility is owned by another player: Rent = 10 times the dice roll
-                m_gameManager->waiting_response = true;
-                m_gameManager->waiting_response_type = WaitingResponseType::UtilityRent;
-                m_gameManager->rentMultiplier = 10;  // Rent for utilities is 10x the dice roll
-                m_gameManager->currentPropertyOwner = owner;
-
-                QMessageBox::information(nullptr, "Utility Owned", "This utility is owned by " + QString::fromStdString(owner->getName()) +
-                                                                       ". Roll the dice and pay 10 times the amount rolled.");
-                return PlayerAction::NoAction;  // Await dice roll input from the player
             }
+            return PlayerAction::SurpriseCardNearestUtility;
+        } else if (owner != player) {
+            // Utility is owned by another player: Rent = 10 times the dice roll
+            m_gameManager->waiting_response = true;
+            m_gameManager->waiting_response_type = WaitingResponseType::UtilityRent;
+            m_gameManager->rentMultiplier = 10;  // Rent for utilities is 10x the dice roll
+            m_gameManager->currentPropertyOwner = owner;
+
+            QMessageBox::information(nullptr, "Utility Owned", "This utility is owned by " + QString::fromStdString(owner->getName()) +
+                                                                   ". Roll the dice and pay 10 times the amount rolled.");
+            return PlayerAction::NoAction;  // Await dice roll input from the player
         }
+    }
     else if (surpriseResult == "Advance to nearest Railroad. If unowned, you may buy it from the Bank. If owned, pay owner twice the rental to which they are otherwise entitled.") {
         int railroadIndex = findNearestRailroad(player->getCurrentGridIndex());
         player->setCurrentGridIndex(railroadIndex);
